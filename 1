@@ -1,0 +1,15 @@
+#!/bin/bash
+
+cat /etc/hosts | while read -r line; do
+[[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
+
+ip_address=$(echo $line | awk '{print $1}')
+hostname=$(echo $line | awk '{print $2}')
+
+nslookup_ip=$(nslookup "$hostname" | awk '/^Address:/{print $2; exit}')
+
+if [[ "$nslookup_ip" != "$ip_address" ]]; 
+then
+echo "Bogus IP for $hostname in /etc/hosts !"
+fi
+done
