@@ -1,0 +1,33 @@
+#!/bin/bash
+check_ip_association() {
+    local hostname="$1"
+    local expected_ip="$2"
+    local dns_server="$3"
+    
+    nslookup_ip=$(nslookup "$hostname" "$dns_server" | awk '/^Address:/{print $2; exit}')
+    
+   
+    if [[ -z "$nslookup_ip" ]]; then
+        echo "nslookup failed for $hostname"
+        return 1
+    fi
+    
+    
+    if [[ "$nslookup_ip" != "$expected_ip" ]]; then
+        echo "Bogus IP for $hostname in /etc/hosts! Expected $nslookup_ip, found $expected_ip."
+    fi
+}
+
+while IFS= read -r line; do
+   
+    [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
+
+  
+    ip_address=$(echo "$line" | awk '{print $1}')
+    hostname=$(echo "$line" | awk '{print $2}')
+
+    
+    dns_server="8.8.8.8"
+
+    check_ip_association "$hostname" "$ip_address" "$dns_server"
+done < /etc/hosts
